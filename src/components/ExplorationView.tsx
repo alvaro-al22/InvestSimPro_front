@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { Search, TrendingUp, ArrowRight, Info } from 'lucide-react';
+// src/components/ExplorationView.tsx
+import React, { useState, useEffect } from 'react';
+import { Search, TrendingUp, ArrowRight } from 'lucide-react';
+
+interface Asset {
+  id: string;
+  name: string;
+  price: string;
+  change: string;
+}
 
 interface ExplorationViewProps {
   category: string;
@@ -9,35 +17,23 @@ interface ExplorationViewProps {
 const ExplorationView: React.FC<ExplorationViewProps> = ({ category, onStartSimulation }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
 
-  // Datos de ejemplo - En una implementación real, estos vendrían de una API
-  const mockAssets = {
-    stocks: [
-      { id: 'AAPL', name: 'Apple Inc.', price: '175.43', change: '+2.3%' },
-      { id: 'GOOGL', name: 'Alphabet Inc.', price: '2,789.23', change: '+1.8%' },
-      { id: 'MSFT', name: 'Microsoft Corp.', price: '334.12', change: '+1.5%' },
-      { id: 'AMZN', name: 'Amazon.com Inc.', price: '3,421.57', change: '-0.7%' },
-    ],
-    indices: [
-      { id: 'SPX', name: 'S&P 500', price: '4,532.12', change: '+1.2%' },
-      { id: 'NDX', name: 'NASDAQ 100', price: '15,234.56', change: '+1.7%' },
-      { id: 'DJI', name: 'Dow Jones', price: '34,567.89', change: '+0.9%' },
-    ],
-    crypto: [
-      { id: 'BTC', name: 'Bitcoin', price: '45,678.90', change: '+5.4%' },
-      { id: 'ETH', name: 'Ethereum', price: '3,234.56', change: '+4.2%' },
-      { id: 'BNB', name: 'Binance Coin', price: '412.34', change: '+2.8%' },
-    ],
-  };
+  useEffect(() => {
+    // Se consulta el endpoint del backend para obtener activos reales
+    fetch(`http://localhost:5000/api/market/assets?category=${category}`)
+      .then(response => response.json())
+      .then(data => setAssets(data))
+      .catch(error => console.error('Error al cargar activos:', error));
+  }, [category]);
 
-  const assets = mockAssets[category as keyof typeof mockAssets] || [];
-  const filteredAssets = assets.filter(asset => 
+  const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleAsset = (assetId: string) => {
-    setSelectedAssets(prev => 
+    setSelectedAssets(prev =>
       prev.includes(assetId)
         ? prev.filter(id => id !== assetId)
         : [...prev, assetId]
@@ -96,7 +92,7 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ category, onStartSimu
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAssets.map((asset) => (
-                <tr 
+                <tr
                   key={asset.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => toggleAsset(asset.id)}
@@ -119,9 +115,7 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ category, onStartSimu
                     <div className="text-sm text-gray-900">${asset.price}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex text-sm ${
-                      asset.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <span className={`inline-flex text-sm ${asset.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
                       {asset.change}
                     </span>
                   </td>
